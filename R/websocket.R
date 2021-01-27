@@ -1,0 +1,87 @@
+WebsocketHandler <- R6::R6Class(
+  "WebsocketHandler",
+  public = list(
+    initialize = function(name, fun){
+      assert_that(not_missing(fun))
+      assert_that(not_missing(name))
+
+      private$.fun <- fun
+      private$.name <- name
+    },
+    receive = function(message, ws){
+      args <- formalArgs(private$.fun)
+
+      if(length(args) > 1) {
+        ws <- Websocket$new(ws)
+        private$.fun(message$message, ws)
+      } else {
+        private$.fun(message$message)
+      }
+    },
+    is_handler = function(message){
+      if(is.null(message$isAmbiorix))
+        return(FALSE)
+
+      private$.name == message$name
+    },
+    print = function(){
+      foo <- paste0(deparse(private$.fun), collapse = "\n")
+      cli::cli_alert_info("receive: {.code receive(message, ws)}")
+      cli::cli_ul("Listening on message:")
+      cli::cli_li("name: {.val {private$.name}}")
+      cli::cli_li("fun: {.code {foo}}")
+    }
+  ),
+  private = list(
+    .name = NULL,
+    .fun = NULL
+  )
+)
+
+Websocket <- R6::R6Class(
+  "Websocket",
+  public = list(
+    initialize = function(ws){
+      private$.ws <- ws
+    },
+    send = function(name, message){
+      to_json <- get_serialise()
+      message <- list(
+        name = name,
+        message = message,
+        isAmbiorix = TRUE
+      )
+      private$.ws$send(to_json(message))
+    },
+    print = function(){
+      cli::cli_li("send: {.code send(name, message)}")
+    }
+  ),
+  private = list(
+    .ws = NULL
+  )
+)
+
+#' Websocket Client
+#' 
+#' Handle ambiorix websocket client.
+#' 
+#' @param path Path to copy the file to.
+#' 
+#' @section Functions:
+#' - `copy_websocket_client` Copies the websocket client file, useful when ambiorix was not setup with the ambiorix generator.
+#' - `get_websocket_client` Retrieves the full path to the local websocket client.
+#' 
+#' @name websocket_client
+#' @export 
+copy_websocket_client <- function(path){
+  assert_that(not_missing(path))
+
+  lib <- get_websocket_client()
+  fs::file_copy(lib, path)
+}
+
+#' @rdname websocket_client
+get_websocket_client <- function(){
+  system.file("ambiorix.js", package = "ambiorix")
+}
