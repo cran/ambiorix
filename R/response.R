@@ -59,19 +59,14 @@ print.ambiorixResponse <- function(x, ...){
 }
 
 #' Response
+#' 
+#' Response class to generate responses sent from the server.
 #'
-#' @noRd
-#' @keywords internal
+#' @export 
 Response <- R6::R6Class(
   "Response",
+  lock_objects = FALSE,
   public = list(
-    initialize = function(){
-      template_path <- here::here("templates")
-      private$.has_templates <- fs::dir_exists(template_path)
-
-      if(!private$.has_templates)
-        return(self)
-    },
 #' @details Set the status of the response.
 #' @param status An integer defining the status.
     status = function(status){
@@ -84,6 +79,17 @@ Response <- R6::R6Class(
 #' @param headers HTTP headers to set.
 #' @param status Status of the response, if `NULL` uses `self$status`.
     send = function(body, headers = list('Content-Type' = 'text/html'), status = NULL){
+      headers <- private$.get_headers(headers)
+      response(status = private$.get_status(status), headers = headers, body = as.character(body))
+    },
+#' @details Send a plain HTML response, pre-processed with sprintf.
+#' @param body Body of the response.
+#' @param ... Passed to `...` of `sprintf`.
+#' @param headers HTTP headers to set.
+#' @param status Status of the response, if `NULL` uses `self$status`.
+    sendf = function(body, ..., headers = list('Content-Type' = 'text/html'), status = NULL){
+      body <- sprintf(body, ...)
+      headers <- private$.get_headers(headers)
       response(status = private$.get_status(status), headers = headers, body = as.character(body))
     },
 #' @details Send a plain text response.
@@ -91,14 +97,15 @@ Response <- R6::R6Class(
 #' @param headers HTTP headers to set.
 #' @param status Status of the response, if `NULL` uses `self$status`.
     text = function(body, headers = list('Content-Type' = 'text/plain'), status = NULL){
+      headers <- private$.get_headers(headers)
       response(status = private$.get_status(status), headers = headers, body = as.character(body))
     },
 #' @details Send a file.
 #' @param file File to send.
 #' @param headers HTTP headers to set.
-    send_file = function(file, status = NULL){
+#' @param status Status of the response.
+    send_file = function(file, headers = list('Content-Type' = 'text/html'), status = NULL){
       assert_that(not_missing(file))
-
       self$render(file, data = list(), status = private$.get_status(status))
     },
 #' @details Redirect to a path or URL.
@@ -114,18 +121,16 @@ Response <- R6::R6Class(
 #' @details Render a template file.
 #' @param file Template file.
 #' @param data List to fill `[% tags %]`.
+#' @param headers HTTP headers to set.
 #' @param status Status of the response, if `NULL` uses `self$status`.
-    render = function(file, data = list(), status = NULL){
+    render = function(file, data = list(), headers = list('Content-Type' = 'text/html'), status = NULL){
       assert_that(not_missing(file))
+      assert_that(has_file(file))
 
-      if(!private$.has_templates)
-        stop("No templates directory found", call. = FALSE)
+      file_content <- private$.render_template(file, data)
+      headers <- private$.get_headers(headers)
 
-      file_path <- private$.get_template_path(file)
-
-      file_content <- private$.render_template(file_path, data)
-
-      response(file_content, status = private$.get_status(status))
+      response(file_content, status = private$.get_status(status), headers = headers)
     },
 #' @details Render an object as JSON.
 #' @param body Body of the response.
@@ -134,6 +139,7 @@ Response <- R6::R6Class(
 #' @param ... Additional arguments passed to the serialiser.
     json = function(body, headers = list("Content-Type" = "application/json"), status = NULL, ...){
       to_json <- get_serialise(...)
+      headers <- private$.get_headers(headers)
       response(to_json(body), headers = headers, status = private$.get_status(status))
     },
 #' @details Sends a comma separated value file
@@ -147,13 +153,14 @@ Response <- R6::R6Class(
 
       name <- sprintf("attachment;charset=UTF-8;filename=%s.csv", name)
 
-      header <- list(
+      headers <- list(
         "Content-Type" = "text/csv",
         "Content-Disposition" = name
       )
+      headers <- private$.get_headers(headers)
 
       data <- readr::format_csv(data, ...)
-      response(data, header = header, status = private$.get_status(status))
+      response(data, header = headers, status = private$.get_status(status))
     },
 #' @details Sends a tab separated value file
 #' @param data Data to convert to CSV.
@@ -166,13 +173,14 @@ Response <- R6::R6Class(
 
       name <- sprintf("attachment;charset=UTF-8;filename=%s.tsv", name)
 
-      header <- list(
+      headers <- list(
         "Content-Type" = "tab-separated-values",
         "Content-Disposition" = name
       )
+      headers <- private$.get_headers(headers)
 
       data <- readr::format_tsv(data, ...)
-      response(data, header = header, status = private$.get_status(status))
+      response(data, header = headers, status = private$.get_status(status))
     },
 #' @details Sends an htmlwidget.
 #' @param widget The widget to use.
@@ -186,26 +194,213 @@ Response <- R6::R6Class(
       # save and read
       tmp <- tempfile(fileext = ".html")
       htmlwidgets::saveWidget(widget, tmp, selfcontained = TRUE, ...)
+      headers <- private$.get_headers(headers)
 
-      response(body = paste0(readLines(tmp), "\n", collapse = ""), status = private$.get_status(status))
+      response(body = paste0(read_lines(tmp), "\n", collapse = ""), status = private$.get_status(status), headers = headers)
     },
+#' @details Render a markdown file.
+#' @param file Template file.
+#' @param data List to fill `[% tags %]`.
+#' @param headers HTTP headers to set.
+#' @param status Status of the response, if `NULL` uses `self$status`.
+    md = function(file, data = list(), headers = list('Content-Type' = 'text/html'), status = NULL) {
+      check_installed("commonmark")
+      self$render(file, data, headers, status)
+    },
+#' @details Add headers to the response.
+#' @param name,value Name and value of the header.
+#' @return Invisibly returns self.
+    header = function(name, value){
+      name <- as_label(name)
+      private$.headers[[name]] <- value
+      invisible(self)
+    },
+#' @details Print
     print = function(){
-      cli::cli_li("{.code send(body, headers, status)}")
-      cli::cli_li("{.code send_file(file, status)}")
-      cli::cli_li("{.code render(file, data, status)}")
-      cli::cli_li("{.code json(body, headers, status)}")
-      cli::cli_li("{.code redirect(path, status)}")
-      cli::cli_li("{.code status(status)}")
-      cli::cli_li("{.code csv(data, name, ...)}")
-      cli::cli_li("{.code tsv(data, name, ...)}")
-      cli::cli_li("{.code rds(data, name, ...)}")
-      cli::cli_li("{.code htmlwidget(widget, ...)}")
+      cli::cli_h3("A Response")
+
+      if(!length(private$.headers))
+        return(invisible())
+      
+      cli::cli_h3("Headers")
+      cli::cli_ul()
+
+      for(i in 1:length(private$.headers)) {
+        cli::cli_li("HEADER {names(private$.headers)[i]}")
+        str(private$.headers[[i]])
+      }
+
+      cli::cli_end()
+    },
+#' @details Set Data
+#' @param name Name of the variable.
+#' @param value Value of the variable.
+#' @return Invisible returns self.
+    set = function(name, value){
+      assert_that(not_missing(name))
+      assert_that(not_missing(value))
+
+      name <- as_label(name)
+      self[[name]] <- value
+
+      invisible(self)
+    },
+#' @details Get data
+#' @param name Name of the variable to get.
+    get = function(name){
+      assert_that(not_missing(name))
+
+      name <- as_label(name)
+      self[[name]]
+    },
+#' @details Get headers
+#' Returns the list of headers currently set.
+    get_headers = function() {
+      return(private$.headers)
+    },
+#' @details Add a pre render hook.
+#' Runs before the `render` and `send_file` method.
+#' 
+#' @param hook A function that accepts at least 4 arguments:
+#' - `self`: The `Request` class instance.
+#' - `content`: File content a vector of character string,
+#' content of the template.
+#' - `data`: `list` passed from `render` method.
+#' - `ext`: File extension of the template file.
+#' 
+#' This function is used to add pre-render hooks to the `render`
+#' method. The function should return an object of class 
+#' `responsePreHook` as obtained by [pre_hook()].
+#' This is meant to be used by middlewares to, if necessary,
+#' pre-process rendered data.
+#' 
+#' Include `...` in your `hook` to ensure it will handle
+#' potential updates to hooks in the future.
+#' 
+#' @return Invisible returns self.
+    pre_render_hook = function(hook) {
+      assert_that(not_missing(hook))
+      assert_that(
+        is.function(hook),
+        msg = "`hook` must be a function"
+      )
+
+      assert_that(
+        length(formalArgs(hook)) >= 4,
+        msg = "`hook` must take at least 4 arguments: `self`, `content`, `data`, and `ext`"
+      )
+
+      private$.preHooks <- append(private$.preHooks, hook)
+      invisible(self)
+    },
+#' @details Post render hook.
+#' 
+#' @param hook A function to run after the rendering of HTML.
+#' It should accept at least 3 arguments:
+#' - `self`: The `Request` class instance.
+#' - `content`: File content a vector of character string,
+#' content of the template.
+#' - `ext`: File extension of the template file.
+#' 
+#' Include `...` in your `hook` to ensure it will handle
+#' potential updates to hooks in the future.
+#' 
+#' @return Invisible returns self.
+    post_render_hook = function(hook) {
+      assert_that(not_missing(hook))
+      assert_that(
+        is.function(hook),
+        msg = "`hook` must be a function"
+      )
+
+      assert_that(
+        length(formalArgs(hook)) >= 3,
+        msg = "`hook` must take 2 arguments: `self`, `content`, and `ext`"
+      )
+      
+      private$.postHooks <- append(private$.postHooks, hook)
+      invisible(self)
+    },
+#' @details Set a cookie
+#' @param name Name of the cookie.
+#' @param value value of the cookie.
+#' @param expires Expiry, if an integer assumes it's the number of seconds
+#' from now. Otherwise accepts an object of class `POSIXct` or `Date`.
+#' If unspecified, the cookie becomes a session cookie. A session finishes 
+#' when the client shuts down, after which the session cookie is removed. 
+#' @param max_age Indicates the number of seconds until the cookie expires. 
+#' A zero or negative number will expire the cookie immediately. 
+#' If both `expires` and `max_age` are set, the latter has precedence.
+#' @param domain Defines the host to which the cookie will be sent.
+#' If omitted, this attribute defaults to the host of the current document URL,
+#' not including subdomains.
+#' @param path Indicates the path that must exist in the requested URL for the 
+#' browser to send the Cookie header.
+#' @param secure Indicates that the cookie is sent to the server only when a
+#' request is made with the https: scheme (except on localhost), and therefore, 
+#' is more resistant to man-in-the-middle attacks.
+#' @param http_only Forbids JavaScript from accessing the cookie, for example,
+#' through the Document.cookie property.
+#' @param same_site Controls whether or not a cookie is sent with cross-origin
+#' requests, providing some protection against cross-site request forgery
+#' attacks (CSRF). Accepts `Strict`, `Lax`, or `None`.
+    cookie = function(
+      name,
+      value,
+      expires = NULL,
+      max_age = NULL,
+      domain = NULL,
+      path = NULL,
+      secure = TRUE,
+      http_only = FALSE,
+      same_site = NULL
+    ) {
+      assert_that(not_missing(name))
+      assert_that(not_missing(value))
+
+      name <- as_label(name)
+      cookie <- sprintf("%s=%s", name, value)
+
+      if(!is.null(expires)) {
+        expires <- convert_cookie_expires(expires)
+        cookie <- sprintf("%s; Expires=%s", cookie, expires)
+      }
+
+      if(!is.null(max_age)) {
+        cookie <- sprintf("%s; Max-Age=%s", cookie, max_age)
+      }
+
+      if(!is.null(domain)) {
+        cookie <- sprintf("%s; Domain=%s", cookie, domain)
+      }
+
+      if(!is.null(path)) {
+        cookie <- sprintf("%s; Path=%s", cookie, path)
+      }
+
+      if(secure) {
+        cookie <- sprintf("%s; Secure", cookie)
+      }
+
+      if(http_only) {
+        cookie <- sprintf("%s; HttpOnly", cookie)
+      }
+
+      if(!is.null(same_site)) {
+        cookie <- sprintf("%s; SameSite=%s", cookie, same_site)
+      }
+
+      private$.headers[["Set-Cookie"]] <- cookie
+
+      invisible(self)
     }
   ),
   private = list(
-    .has_templates = FALSE,
     .templates = list(),
     .status = 200L,
+    .headers = list(), 
+    .preHooks = list(),
+    .postHooks = list(),
     .get_template_path = function(file){
       file <- remove_extensions(file)
 
@@ -225,25 +420,19 @@ Response <- R6::R6Class(
 
       return(file_r)
     },
-    .try_template_path = function(file, ext = c(".html", ".R")){
-      ext <- match.arg(ext)
-      path <- here::here("templates", paste0(file, ext))
-
-      if(fs::file_exists(path))
-        return(path)
-
-      return(NULL)
-    },
     .render_template = function(file, data){
       # read and replace tags
-      file_content <- readLines(file)
+      file_content <- read_lines(file)
 
       # render
       ext <- tools::file_ext(file)
 
       # handle partials
       # replace brackets so glue::glue_data evals
-      file_content <- replace_partials(file_content, ext = ext)
+      file_content <- replace_partials(file, file_content, ext = ext)
+
+      if(ext == "md")
+        file_content <- commonmark::markdown_html(file_content)
 
       if(ext == "html"){
 
@@ -254,20 +443,35 @@ Response <- R6::R6Class(
         data <- lapply(data, function(x){
           to_json(x)
         })
-      } else {
+      } 
+
+      if(ext != "html")
         data <- lapply(data, function(x){
 
-        # If not AsIs can use object
-        if(!inherits(x, "robj"))
-          return(x)
+          # If not AsIs can use object
+          if(!inherits(x, "robj"))
+            return(x)
 
-        paste0(
-          capture.output(
-            dput(x)
-          ),
-          collapse = ""
-        )
+          paste0(
+            capture.output(
+              dput(x)
+            ),
+            collapse = ""
+          )
         })
+
+      # hooks
+      if(length(private$.preHooks) > 0) {
+        for(i in 1:length(private$.preHooks)) {
+          pre_processed <- private$.preHooks[[i]](self, file_content, data, ext)
+          if(!inherits(pre_processed, "responsePreHook")){
+            cat(error(), "Not a valid response from pre-hook (ignoring)\n")
+            next
+          }
+
+          file_content <- pre_processed$content
+          data <- pre_processed$data
+        }
       }
 
       file_content <- lapply(file_content, function(x, data){
@@ -275,12 +479,11 @@ Response <- R6::R6Class(
       }, data = data)
 
       # collapse html
-      if(ext == "html")
-        return(paste0(file_content, collapse = ""))
+      if(ext == "html" || ext == "md")
+        return(private$.run_post_hooks(paste0(file_content, collapse = ""), ext))
 
       # parse R
-      render_html(file_content)
-
+      private$.run_post_hooks(render_html(file_content), ext)
     },
     .make_template_path = function(file){
       # clean input
@@ -297,6 +500,27 @@ Response <- R6::R6Class(
         return(private$.status)
 
       status
+    },
+    .get_headers = function(headers = list()){
+      modifyList(private$.headers, headers)
+    },
+    .run_post_hooks = function(file_content, ext) {
+      if(length(private$.postHooks) == 0) {
+        return(file_content)
+      }
+
+      for(i in 1:length(private$.postHooks)) {
+        content <- private$.postHooks[[i]](self, file_content, ext)
+
+        if(!is.character(content)){
+          cat(error(), "Not a character response from post-hook (ignoring)\n", stdout())
+          next
+        }
+
+        file_content <- content
+      }
+
+      return(file_content)
     }
   )
 )
@@ -330,4 +554,63 @@ print.robj <- function(x, ...){
   cli::cli_alert_info("R object")
   class(x) <- class(x)[class(x) != "robj"]
   print(x)
+}
+
+#' Pre Hook Response
+#' 
+#' @param content File content, a character vector.
+#' @param data A list of data passed to `glue::glue_data`.
+#' 
+#' @export 
+pre_hook <- function(
+  content,
+  data
+) {
+  structure(
+    list(
+      content = content,
+      data = data
+    ),
+    class = c("list", "responsePreHook")
+  )
+}
+
+#' Convert Cookie Expires
+#' 
+#' Converts the cookie `expires` argument
+#' to the expected
+#' [Date format](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date).
+#' 
+#' @param expires Expiry, if an integer assumes it's the number of seconds
+#' from now. Otherwise accepts an object of class `POSIXct` or `Date`.
+#' 
+#' @examples 
+#' # expires in an hour
+#' convert_cookie_expires(60 * 60)
+#' 
+#' # expires tomorrow
+#' convert_cookie_expires(Sys.Date() + 1)
+#' 
+#' # expires in 1 minute
+#' convert_cookie_expires(Sys.time() + 60)
+#' 
+#' @noRd 
+#' @keywords internal
+convert_cookie_expires <- function(expires) {
+  if(is.character(expires))
+    return(expires)
+
+  if(is.numeric(expires)) {
+    expires <- as.POSIXct(Sys.time(), tz = "UTC") + expires
+  }
+
+  if(inherits(expires, "Date") || inherits(expires, "POSIXct")) {
+    expires <- as.POSIXct(expires, tz = "UTC")
+    expires <- format(
+      expires,
+      "%a, %d %b %Y %H:%M:%S GMT"
+    )
+  }
+
+  return(expires)
 }

@@ -1,11 +1,46 @@
-.requests <- new.env()
-
-#' Preprocess Request
+#' Request
 #' 
-#' @noRd 
-#' @keywords internal
+#' A request.
+#' 
+#' @field HEADERS Headers from the request.
+#' @field HTTP_ACCEPT Content types to accept.
+#' @field HTTP_ACCEPT_ENCODING Encoding of the request.
+#' @field HTTP_ACCEPT_LANGUAGE Language of the request.
+#' @field HTTP_CACHE_CONTROL Directorives for the cache (case-insensitive).
+#' @field HTTP_CONNECTION Controls whether the network connection stays open after the current transaction finishes.
+#' @field HTTP_COOKIE Cookie data.
+#' @field HTTP_HOST Host making the request.
+#' @field HTTP_SEC_FETCH_DEST Indicates the request's destination. That is the initiator of the original fetch request, which is where (and how) the fetched data will be used.
+#' @field HTTP_SEC_FETCH_MODE Indicates mode of the request.
+#' @field HTTP_SEC_FETCH_SITE Indicates the relationship between a request initiator's origin and the origin of the requested resource. 
+#' @field HTTP_SEC_FETCH_USER Only sent for requests initiated by user activation, and its value will always be `?1`.
+#' @field HTTP_UPGRADE_INSECURE_REQUESTS Signals that server supports upgrade.
+#' @field HTTP_USER_AGENT User agent.
+#' @field httpuv.version Version of httpuv.
+#' @field PATH_INFO Path of the request.
+#' @field QUERY_STRING Query string of the request.
+#' @field REMOTE_ADDR Remote address.
+#' @field REMOTE_PORT Remote port.
+#' @field REQUEST_METHOD Method of the request, e.g.: `GET`.
+#' @field rook.errors Errors from rook.
+#' @field rook.input Rook inputs.
+#' @field rook.url_scheme Rook url scheme.
+#' @field rook.version Rook version.
+#' @field SCRIPT_NAME The initial portion of the request URL's "path" that corresponds to the application object, so that the application knows its virtual "location".
+#' @field SERVER_NAME Server name.
+#' @field SERVER_PORT Server port
+#' @field CONTENT_LENGTH Size of the message body.
+#' @field CONTENT_TYPE Type of content of the request.
+#' @field HTTP_REFERER Contains an absolute or partial address of the page that makes the request.
+#' @field body Request, an environment.
+#' @field query Parsed `QUERY_STRING`, `list`.
+#' @field params A `list` of parameters.
+#' @field cookie Parsed `HTTP_COOKIE`.
+#' 
+#' @export 
 Request <- R6::R6Class(
   "Request",
+  lock_objects = FALSE,
   public = list(
     HEADERS = NULL,
     HTTP_ACCEPT = NULL, 
@@ -14,7 +49,6 @@ Request <- R6::R6Class(
     HTTP_CACHE_CONTROL = NULL,
     HTTP_CONNECTION = NULL,
     HTTP_COOKIE = NULL,
-    HTTP_DNT = NULL, 
     HTTP_HOST = NULL,
     HTTP_SEC_FETCH_DEST = NULL,
     HTTP_SEC_FETCH_MODE = NULL,
@@ -41,6 +75,9 @@ Request <- R6::R6Class(
     body = NULL,
     query = list(),
     params = list(),
+    cookie = list(),
+    #' @details Constructor
+    #' @param req Original request (environment).
     initialize = function(req){
       self$HEADERS <- req$HEADERS
       self$HTTP_ACCEPT <- req$HTTP_ACCEPT
@@ -49,7 +86,6 @@ Request <- R6::R6Class(
       self$HTTP_CACHE_CONTROL <- req$HTTP_CACHE_CONTROL
       self$HTTP_CONNECTION <- req$HTTP_CONNECTION
       self$HTTP_COOKIE <- req$HTTP_COOKIE
-      self$HTTP_DNT <- req$HTTP_DNT
       self$HTTP_HOST <- req$HTTP_HOST
       self$HTTP_SEC_FETCH_DEST <- req$HTTP_SEC_FETCH_DEST
       self$HTTP_SEC_FETCH_MODE <- req$HTTP_SEC_FETCH_MODE
@@ -76,9 +112,13 @@ Request <- R6::R6Class(
       self$body <- req
 
       private$.parse_query_string(req$QUERY_STRING)
+      private$.parse_cookie(req$HTTP_COOKIE)
 
     },
+    #' @details Print
     print = function(){
+      cli::cli_h3("A Request")
+      cli::cli_ul()
       cli::cli_li("HEADERS: {.val {self$HEADERS}}")
       cli::cli_li("HTTP_ACCEPT: {.val {self$HTTP_ACCEPT}}")
       cli::cli_li("HTTP_ACCEPT_ENCODING: {.val {self$HTTP_ACCEPT_ENCODING}}")
@@ -86,7 +126,6 @@ Request <- R6::R6Class(
       cli::cli_li("HTTP_CACHE_CONTROL: {.val {self$HTTP_CACHE_CONTROL}}")
       cli::cli_li("HTTP_CONNECTION: {.val {self$HTTP_CONNECTION}}")
       cli::cli_li("HTTP_COOKIE: {.val {self$HTTP_COOKIE}}")
-      cli::cli_li("HTTP_DNT: {.val {self$HTTP_DNT}}")
       cli::cli_li("HTTP_HOST: {.val {self$HTTP_HOST}}")
       cli::cli_li("HTTP_SEC_FETCH_DEST: {.val {self$HTTP_SEC_FETCH_DEST}}")
       cli::cli_li("HTTP_SEC_FETCH_MODE: {.val {self$HTTP_SEC_FETCH_MODE}}")
@@ -118,49 +157,76 @@ Request <- R6::R6Class(
         cli::cli_li("query: {.val query}")
         str(self$query)
       }
+
+      cli::cli_end()
     },
+    #' @details Set Data
+    #' @param name Name of the variable.
+    #' @param value Value of the variable.
+    #' @return Invisible returns self.
     set = function(name, value){
       assert_that(not_missing(name))
       assert_that(not_missing(value))
 
-      name <- deparse(substitute(name))
-      .requests[[name]] <- value
+      name <- as_label(name)
+      self[[name]] <- value
+
+      invisible(self)
     },
+    #' @details Get data
+    #' @param name Name of the variable to get.
     get = function(name){
       assert_that(not_missing(name))
 
-      name <- deparse(substitute(name))
-      .requests[[name]]
+      name <- as_label(name)
+      self[[name]]
     }
   ),
   private = list(
     .parse_query_string = function(query){
-      if(is.null(query)){
-        self$query <- list()
+      if(is.null(query))
         return()
-      }
 
-      if(query == ""){
-        self$query <- list()
+      if(query == "")
         return()
-      }
       
       q <- gsub("^\\?", "", query)
       params <- strsplit(q, "&")[[1]]
       params_split <- strsplit(params, "=")
 
       lst <- sapply(params_split, function(x){
-        if(length(x) > 1) return(x[2])
+        if(length(x) > 1) return(utils::URLdecode(x[2]))
 
-        x[1]
+        utils::URLdecode(x[1])
       })
       names(lst) <- sapply(params_split, function(x){
-        if(length(x) > 1) return(x[1])
+        if(length(x) > 1) return(utils::URLdecode(x[1]))
         return(NULL)
       })
 
       self$query <- as.list(lst)
       invisible()
+    },
+    .parse_cookie = function(cookie) {
+      if(is.null(cookie))
+        return()
+
+      if(cookie == "")
+        return()
+
+      split <- strsplit(cookie, ";")[[1]]
+      split <- strsplit(split, "=")
+      for(i in 1:length(split)) {
+        value <- trimws(split[[i]])
+
+        if(length(value) < 2)
+          next
+
+        if(value[1] == "")
+          next
+
+        self$cookie[[value[1]]] <- value[2]
+      }
     }
   )
 )

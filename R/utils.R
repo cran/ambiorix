@@ -28,7 +28,7 @@ render_html <- function(expr){
 
   htmltools::save_html(tags, file = tmp, background = "none")
 
-  paste0(readLines(tmp), collapse = "")
+  paste0(read_lines(tmp), collapse = "")
 }
 
 #' Browse App
@@ -75,29 +75,72 @@ remove_extensions <- function(files){
 #'
 #' Replaces partials tags `[! partial.html !]` so it can be intrepreted by [glue::glue_data()]
 #'
+#' @param file Parent file in which the partials are found.
 #' @param file_content Content of the template file containing tags, output of [readLines()]:
 #' a character vector.
 #' @param ext Extension of template file.
 #'
 #' @noRd
 #' @keywords internal
-replace_partials <- function(file_content, ext = c("html", "R")){
-
+replace_partials <- function(file, file_content, ext = c("html", "R", "md")){
   assert_that(not_missing(file_content))
-
   ext <- match.arg(ext)
+
+  dir <- get_dir(file)
+  
+  # commonmark wraps tags in <p> tags
+  # re remove those
+  if(ext == "md") {
+    file_content <- gsub(
+      "<p>\\[\\! ?",
+      "[!",
+      file_content
+    )
+    file_content <- gsub(
+      " ?\\!\\]</p>",
+      "!]",
+      file_content
+    )
+
+    # then switch extension to actually replace partials
+    ext <- "html"
+  }
 
   if(ext == "html"){
     # here only need read and collapse
-    file_content <- gsub("\\[\\! ?", "[% paste0(readLines(here::here('templates', 'partials', '", file_content)
-    file_content <- gsub(" ?\\!\\]", "')), collapse='') %]", file_content)
-  } else {
-    # here needs read collapse and wrap in `HTML`
-    file_content <- gsub("\\[\\! ?", "[% HTML(paste0(readLines(here::here('templates', 'partials', '", file_content)
-    file_content <- gsub(" ?\\!\\]", "')), collapse='')) %]", file_content)
+    file_content <- gsub(
+      "\\[\\! ?", 
+      paste0("[% paste0(readLines('", dir), 
+      file_content
+    )
+    file_content <- gsub(" ?\\!\\]", "'), collapse='') %]", file_content)
+    return(file_content)
   }
 
-  return(file_content)
+  if(tolower(ext) == "r") {
+    # here needs read collapse and wrap in `HTML`
+    file_content <- gsub(
+      "\\[\\! ?", 
+      paste0("[% HTML(paste0(readLines('", dir), 
+      file_content
+    )
+    file_content <- gsub(" ?\\!\\]", "'), collapse='')) %]", file_content)
+    return(file_content)
+  }
+
+}
+
+#' Get Directory
+#' 
+#' Get the base directory of a file.
+#' 
+#' @param file File to get the directory from.
+#' 
+#' @keywords internal
+get_dir <- function(file) {
+  path <- normalizePath(file)
+  basename <- basename(path)
+  gsub(basename, "", path)
 }
 
 #' Checks if Package is Installed
@@ -125,9 +168,47 @@ check_installed <- function(pkg){
 #'
 #' @noRd
 #' @keywords internal
-get_port <- function(port = NULL){
+get_port <- function(host, port = NULL){
+
+  # we need to override the port if the load balancer
+  # is running. This should NOT be set by a dev
+  # this ensures we can overwrite
+  forced <- getOption("ambiorix.port.force")
+  if(!is.null(forced))
+    return(forced)
+
   if(!is.null(port))
     return(as.integer(port))
 
-  httpuv::randomPort()
+  httpuv::randomPort(host = host)
+}
+
+#' Make label
+#' 
+#' Cheap replacement for rlang::as_label to avoid dependency.
+#' 
+#' @noRd
+#' @keywords internal
+as_label <- function(x) {
+  name <- tryCatch(
+    is.character(x),
+    error = function(e) e
+  )
+
+  if(!inherits(name, "error"))
+    return(x)
+
+  deparse(substitute(x, parent.frame()))
+}
+
+#' Silent readLines
+#' 
+#' Avoids EOF warnings.
+#' 
+#' @noRd
+#' @keywords internal
+read_lines <- function(...) {
+  suppressWarnings(
+    readLines(...)
+  )
 }
