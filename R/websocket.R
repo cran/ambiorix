@@ -29,7 +29,6 @@ WebsocketHandler <- R6::R6Class(
       cli::cli_alert_info("receive: {.code receive(message, ws)}")
       cli::cli_ul("Listening on message:")
       cli::cli_li("name: {.val {private$.name}}")
-      cli::cli_li("fun: {.code {foo}}")
       cli::cli_end()
     }
   ),
@@ -57,13 +56,12 @@ Websocket <- R6::R6Class(
     #' @param message Content of the message, anything that can be
     #' serialised to JSON.
     send = function(name, message){
-      to_json <- get_serialise()
       message <- list(
         name = name,
         message = message,
         isAmbiorix = TRUE
       )
-      private$.ws$send(to_json(message))
+      private$.ws$send(serialise(message))
     },
     #' @details Print
     print = function(){

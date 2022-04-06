@@ -1,6 +1,10 @@
 valid_path <- function(x) {
-  if(missing(x)) return(FALSE)
-  if(!inherits(x, "character")) return(FALSE)
+  if(missing(x)) 
+    return(FALSE)
+
+  if(!inherits(x, "character")) 
+    return(FALSE)
+
   return(TRUE)
 }
 
@@ -42,6 +46,28 @@ is_logger <- function(x){
 assertthat::on_failure(is_logger) <- function(call, env){
   sprintf(
     "%s must be an object of class `Logger` from the `log` package",
+    deparse(call$x)
+  )
+}
+
+is_function <- function(x){
+  is.function(x)
+}
+
+assertthat::on_failure(is_function) <- function(call, env){
+  sprintf(
+    "`%s` is not a function",
+    deparse(call$x)
+  )
+}
+
+is_renderer <- function(x){
+  length(formalArgs) != 2L
+}
+
+assertthat::on_failure(is_renderer) <- function(call, env){
+  sprintf(
+    "`%s` must accept two arguments: `file` and `data`",
     deparse(call$x)
   )
 }

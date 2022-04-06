@@ -7,11 +7,7 @@
 #' 
 #' @noRd 
 #' @keywords internal
-serialise <- function(data, ...){
-  
-  # don't serialise scalar
-  if(length(data) == 1) return(data)
-  
+default_serialiser <- function(data, ...){
   jsonlite::toJSON(data, auto_unbox = TRUE, dataframe = "rows", ...)
 }
 
@@ -22,5 +18,22 @@ serialise <- function(data, ...){
 #' @noRd 
 #' @keywords internal
 get_serialise <- function(){
-  getOption("AMBIORIX_SERIALISER", serialise)
+  getOption("AMBIORIX_SERIALISER", default_serialiser)
+}
+
+#' Serialise to JSON
+#' 
+#' Serialise an object to JSON.
+#' Default serialiser can be change by setting the
+#' `AMBIORIX_SERIALISER` option to the desired function.
+#' 
+#' @param data Data to serialise.
+#' @param ... Passed to serialiser.
+#' 
+#' @examples 
+#' \dontrun{serialise(cars)}
+#' 
+#' @export
+serialise <- function(data, ...){
+  get_serialise()(data, ...)
 }

@@ -1,5 +1,64 @@
 # ambiorix 2.0.0.9000
 
+__Breaking__
+
+- `Response` method `status` renamed to `set_status`
+(this is to allow having `status` as a field).
+
+__Changes__
+
+- Improve rendering of templates.
+No longer force render data as JSON if using an HTML template.
+- Allow nested partials, their path must be relative.
+- Added `jobj` function to serialise objects to JSON in `render`.
+- Allow passing `host` and `port` to `start()` method.
+- Added `host` and `port` active bindings.
+- Move internal `is_running` field to private.
+- Added `status` active binding on `Response`.
+- Added `get_header`, `set_header`, and `set_headers` to `Response`.
+- Allow adding multiple cookies to the request.
+- Add `parseCookie` JavaScript helper function to JavaScript file.
+- Allow customising the cookie parser with `as_cookie_parser`.
+- Allow adding cookie value preprocessors with `as_cookie_preprocessor`.
+- Arguments to `cookie` method on `Response` take options.
+- Added `clear_cookie` method to `Response`
+- Cookies of the same name overwrite rather than duplicate.
+- Added `content_*` family of convenience function to set content type headers.
+- Export `serialise`
+- Fixed issue where wrong path pattern was matched.
+- Catch error if no route is specified.
+- Do not force body to character fixes [#44](https://github.com/devOpifex/ambiorix/issues/44)
+- Do no force content type on response fixes [#45](https://github.com/devOpifex/ambiorix/issues/45)
+- Deprecate passing headers to `response` or `send`-like functions, use
+`header` method.
+- Deprecate `set_header` in favour of `header` method.
+- Added family of `header_content*` methods to easily set `Content-Type`.
+- Request `HEADERS` is always a `list`.
+- Deprecate `set` and `get` on Response and Request, this is no longer 
+needed the environments are no longer locked; `res$myVar <- 2L`.
+- Deprecate `status` argument of responses, the active binding should 
+be used instead; `res$status <- 404L`.
+- Partially improved route matching.
+- Allow customising the path to pattern converter.
+- Added `get_header` method to the retrieve a specific method.
+- Fix htmlwidget response.
+- Added `image`, `png` and `jpeg` methods to `Response` to serve images.
+- Added `ggplot2` method to `Response`.
+- Allow `use` method on `Router` these will only be applied to paths
+of said router.
+- Added `parse_*` methods to the `Request`.
+- Cookie `path` defaults to `/`.
+- Fix default serialiser
+- More robust `parser_*` methods and fuctions.
+- Empty cookie is empty list instead of empty string.
+- Added `mockRequest` to for testing purposes.
+- Fixed `port`, `host`, and `websocket` active bindings.
+- Add ability to create custom renderer, see 
+[jader](https://github.com/devOpifex/jader), and 
+[pugger](https://github.com/devOpifex/pugger).
+
+# ambiorix 2.0.0
+
 __Breaking change__
 
 The `render` and `send_file` methods of the `Response` object now
@@ -8,8 +67,7 @@ Where one would before `res$render("home")`, now one
 `res$render("templates/home.html")`.
 Similarly, in said templates, to import partials, 
 use full path relative to the template in which the partial is used
-e.g.: from `[! header.html !]` to 
-`[! partials/header.html !]`.
+e.g.: from `[! header.html !]` to `[! partials/header.html !]`.
 
 __Changes__
 

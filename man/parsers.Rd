@@ -6,7 +6,7 @@
 \alias{parse_json}
 \title{Parsers}
 \usage{
-parse_multipart(req, ...)
+parse_multipart(req)
 
 parse_json(req, ...)
 }
@@ -16,7 +16,8 @@ parse_json(req, ...)
 \item{...}{Additional arguments passed to the internal parsers.}
 }
 \value{
-Returns the parsed value as a \code{list}.
+Returns the parsed value as a \code{list} or \code{NULL}
+if it failed to parse.
 }
 \description{
 Collection of parsers to translate request data.

@@ -41,19 +41,6 @@ if(interactive())
  app$start()
 
 ## ------------------------------------------------
-## Method `Ambiorix$get`
-## ------------------------------------------------
-
-app <- Ambiorix$new()
-
-app$get("/", function(req, res){
- res$send("Using {ambiorix}!")
-})
-
-if(interactive())
- app$start()
-
-## ------------------------------------------------
 ## Method `Ambiorix$set_404`
 ## ------------------------------------------------
 
@@ -81,27 +68,7 @@ app$get("/", function(req, res){
 })
 
 if(interactive())
- app$start()
-
-## ------------------------------------------------
-## Method `Ambiorix$receive`
-## ------------------------------------------------
-
-app <- Ambiorix$new()
-
-app$get("/", function(req, res){
- res$send("Using {ambiorix}!")
-})
-
-app$receive("hello", function(msg, ws){
- print(msg) # print msg received
- 
- # send a message back
- ws$send("hello", "Hello back! (sent from R)")
-})
-
-if(interactive())
- app$start()
+ app$list(posrt = 3000L)
 
 ## ------------------------------------------------
 ## Method `Ambiorix$serialiser`
@@ -120,12 +87,13 @@ app$get("/", function(req, res){
 if(interactive())
  app$start()
 }
+\section{Super class}{
+\code{\link[ambiorix:Routing]{ambiorix::Routing}} -> \code{Ambiorix}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{not_found}}{404 Response, must be a handler function that accepts the request and the response, by default uses \code{\link[=response_404]{response_404()}}.}
-
-\item{\code{is_running}}{Boolean indicating whether the server is running.}
 
 \item{\code{error}}{500 response when the route errors, must a handler function that accepts the request and the response, by default uses \code{\link[=response_500]{response_500()}}.}
 
@@ -136,7 +104,9 @@ if(interactive())
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{websocket}}{A handler function that accepts a websocket which overrides ambiorix internal websocket handling.}
+\item{\code{port}}{Port to run the application.}
+
+\item{\code{host}}{Host to run the application.}
 }
 \if{html}{\out{</div>}}
 }
@@ -145,23 +115,32 @@ if(interactive())
 \itemize{
 \item \href{#method-new}{\code{Ambiorix$new()}}
 \item \href{#method-listen}{\code{Ambiorix$listen()}}
-\item \href{#method-get}{\code{Ambiorix$get()}}
-\item \href{#method-put}{\code{Ambiorix$put()}}
-\item \href{#method-patch}{\code{Ambiorix$patch()}}
-\item \href{#method-delete}{\code{Ambiorix$delete()}}
-\item \href{#method-post}{\code{Ambiorix$post()}}
-\item \href{#method-options}{\code{Ambiorix$options()}}
-\item \href{#method-all}{\code{Ambiorix$all()}}
 \item \href{#method-set_404}{\code{Ambiorix$set_404()}}
 \item \href{#method-static}{\code{Ambiorix$static()}}
 \item \href{#method-start}{\code{Ambiorix$start()}}
-\item \href{#method-receive}{\code{Ambiorix$receive()}}
 \item \href{#method-serialiser}{\code{Ambiorix$serialiser()}}
 \item \href{#method-stop}{\code{Ambiorix$stop()}}
 \item \href{#method-print}{\code{Ambiorix$print()}}
-\item \href{#method-use}{\code{Ambiorix$use()}}
 \item \href{#method-clone}{\code{Ambiorix$clone()}}
 }
+}
+\if{html}{
+\out{<details ><summary>Inherited methods</summary>}
+\itemize{
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="all">}\href{../../ambiorix/html/Routing.html#method-all}{\code{ambiorix::Routing$all()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="delete">}\href{../../ambiorix/html/Routing.html#method-delete}{\code{ambiorix::Routing$delete()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="get">}\href{../../ambiorix/html/Routing.html#method-get}{\code{ambiorix::Routing$get()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="get_middleware">}\href{../../ambiorix/html/Routing.html#method-get_middleware}{\code{ambiorix::Routing$get_middleware()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="get_receivers">}\href{../../ambiorix/html/Routing.html#method-get_receivers}{\code{ambiorix::Routing$get_receivers()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="get_routes">}\href{../../ambiorix/html/Routing.html#method-get_routes}{\code{ambiorix::Routing$get_routes()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="options">}\href{../../ambiorix/html/Routing.html#method-options}{\code{ambiorix::Routing$options()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="patch">}\href{../../ambiorix/html/Routing.html#method-patch}{\code{ambiorix::Routing$patch()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="post">}\href{../../ambiorix/html/Routing.html#method-post}{\code{ambiorix::Routing$post()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="put">}\href{../../ambiorix/html/Routing.html#method-put}{\code{ambiorix::Routing$put()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="receive">}\href{../../ambiorix/html/Routing.html#method-receive}{\code{ambiorix::Routing$receive()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="ambiorix" data-topic="Routing" data-id="use">}\href{../../ambiorix/html/Routing.html#method-use}{\code{ambiorix::Routing$use()}}\out{</span>}
+}
+\out{</details>}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
@@ -225,210 +204,6 @@ if(interactive())
 }
 \if{html}{\out{</div>}}
 
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get"></a>}}
-\if{latex}{\out{\hypertarget{method-get}{}}}
-\subsection{Method \code{get()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$get(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to, \code{:} defines a parameter.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-GET Method
-
-Add routes to listen to.
-}
-
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{app <- Ambiorix$new()
-
-app$get("/", function(req, res){
- res$send("Using {ambiorix}!")
-})
-
-if(interactive())
- app$start()
-}
-\if{html}{\out{</div>}}
-
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-put"></a>}}
-\if{latex}{\out{\hypertarget{method-put}{}}}
-\subsection{Method \code{put()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$put(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to, \code{:} defines a parameter.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-PUT Method
-
-Add routes to listen to.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-patch"></a>}}
-\if{latex}{\out{\hypertarget{method-patch}{}}}
-\subsection{Method \code{patch()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$patch(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to, \code{:} defines a parameter.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-PATCH Method
-
-Add routes to listen to.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-delete"></a>}}
-\if{latex}{\out{\hypertarget{method-delete}{}}}
-\subsection{Method \code{delete()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$delete(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to, \code{:} defines a parameter.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-DELETE Method
-
-Add routes to listen to.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-post"></a>}}
-\if{latex}{\out{\hypertarget{method-post}{}}}
-\subsection{Method \code{post()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$post(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-POST Method
-
-Add routes to listen to.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-options"></a>}}
-\if{latex}{\out{\hypertarget{method-options}{}}}
-\subsection{Method \code{options()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$options(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-OPTIONS Method
-
-Add routes to listen to.
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-all"></a>}}
-\if{latex}{\out{\hypertarget{method-all}{}}}
-\subsection{Method \code{all()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$all(path, handler, error = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{Route to listen to.}
-
-\item{\code{handler}}{Function that accepts the request and returns an object
-describing an httpuv response, e.g.: \code{\link[=response]{response()}}.}
-
-\item{\code{error}}{Handler function to run on error.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-All Methods
-
-Add routes to listen to for all methods \code{GET}, \code{POST}, \code{PUT}, \code{DELETE}, and \code{PATCH}.
 }
 
 }
@@ -499,13 +274,15 @@ Static directories
 \if{latex}{\out{\hypertarget{method-start}{}}}
 \subsection{Method \code{start()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$start(auto_stop = TRUE, open = interactive())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$start(port = NULL, host = NULL, open = interactive())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{auto_stop}}{Whether to automatically stop the server when the functon exits.}
+\item{\code{port}}{Integer defining the port, defaults to \code{ambiorix.port} option: uses a random port if \code{NULL}.}
+
+\item{\code{host}}{A string defining the host.}
 
 \item{\code{open}}{Whether to open the app the browser.}
 }
@@ -525,51 +302,7 @@ app$get("/", function(req, res){
 })
 
 if(interactive())
- app$start()
-}
-\if{html}{\out{</div>}}
-
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-receive"></a>}}
-\if{latex}{\out{\hypertarget{method-receive}{}}}
-\subsection{Method \code{receive()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$receive(name, handler)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Name of message.}
-
-\item{\code{handler}}{Function to run when message is received.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Receive Websocket Message
-}
-
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{app <- Ambiorix$new()
-
-app$get("/", function(req, res){
- res$send("Using {ambiorix}!")
-})
-
-app$receive("hello", function(msg, ws){
- print(msg) # print msg received
- 
- # send a message back
- ws$send("hello", "Hello back! (sent from R)")
-})
-
-if(interactive())
- app$start()
+ app$list(posrt = 3000L)
 }
 \if{html}{\out{</div>}}
 
@@ -640,31 +373,6 @@ Stop the webserver.
 
 \subsection{Details}{
 Print
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-use"></a>}}
-\if{latex}{\out{\hypertarget{method-use}{}}}
-\subsection{Method \code{use()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Ambiorix$use(use)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{use}}{Either a router as returned by \link{Router}, a function to use as middleware,
-or a \code{list} of functions.
-If a function is passed, it must accept two arguments (the request, and the response):
-this function will be executed every time the server receives a request.
-\emph{Middleware may but does not have to return a response, unlike other methods such as \code{get}}
-Note that multiple routers and middlewares can be used.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Use a router or middleware
 }
 
 }

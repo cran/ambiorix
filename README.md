@@ -5,8 +5,8 @@
 <img src="man/figures/ambiorix.png" height = "200px"/>
 
 <!-- badges: start -->
-[![R build status](https://github.com/devOpifex/ambiorix/workflows/R-CMD-check/badge.svg)](https://github.com/devOpifex/ambiorix/actions)
 [![R-CMD-check](https://github.com/devOpifex/ambiorix/workflows/R-CMD-check/badge.svg)](https://github.com/devOpifex/ambiorix/actions)
+[![Codecov test coverage](https://codecov.io/gh/devOpifex/ambiorix/branch/master/graph/badge.svg)](https://app.codecov.io/gh/devOpifex/ambiorix?branch=master)
 <!-- badges: end -->
 
 [Website](https://ambiorix.dev) | [CLI](https://github.com/devOpifex/ambiorix-cli) | [Generator](https://github.com/devOpifex/ambiorix.generator) | [Docker](https://hub.docker.com/r/jcoenep/ambiorix) | [Load Balancer](https://github.com/devOpifex/belgic)
@@ -40,13 +40,18 @@ app$start()
 - [alesia](https://github.com/devOpifex/alesia) Minifier
 - [eburones](https://github.com/devOpifex/eburones) Sessions
 - [agris](https://github.com/devOpifex/druid) Security
+- [scilis](https://github.com/devOpifex/scilis) Cookies
 - [titan](https://github.com/devOpifex/titan) Prometheus middleware
+- [surf](https://github.com/devOpifex/surf) CSRF protection
+- [signaculum](https://github.com/devOpifex/signaculum) favicon
+- [pugger](https://github.com/devOpifex/pugger) Pug engine
+- [jader](https://github.com/devOpifex/jader) Jade engine
 
 ## Tools & Extensions
 
 - [belgic](https://github.com/devOpifex/belgic) Load balancer
 - [packer](https://github.com/JohnCoene/packer) JavaScript
-- [CLI](https://github.com/devOpifex/ambiorix-cli) CLI for generator
+- [CLI](https://github.com/devOpifex/ambiorix-cli) for generator
 - [Generator](https://github.com/devOpifex/ambiorix.generator) Project generator
 - [Docker](https://hub.docker.com/r/jcoenep/ambiorix) Docker image
 
