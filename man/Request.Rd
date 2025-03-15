@@ -3,8 +3,25 @@
 \name{Request}
 \alias{Request}
 \title{Request}
+\value{
+A Request object.
+}
 \description{
 A request.
+}
+\examples{
+if (interactive()) {
+  library(ambiorix)
+
+  app <- Ambiorix$new()
+
+  app$get("/", function(req, res) {
+    print(req)
+    res$send("Using {ambiorix}!")
+  })
+
+  app$start()
+}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -37,6 +54,8 @@ A request.
 
 \item{\code{HTTP_USER_AGENT}}{User agent.}
 
+\item{\code{SERVER_NAME}}{Name of the server.}
+
 \item{\code{httpuv.version}}{Version of httpuv.}
 
 \item{\code{PATH_INFO}}{Path of the request.}
@@ -57,9 +76,7 @@ A request.
 
 \item{\code{rook.version}}{Rook version.}
 
-\item{\code{SCRIPT_NAME}}{The initial portion of the request URL's "path" that corresponds to the application object, so that the application knows its virtual "location".}
-
-\item{\code{SERVER_NAME}}{Server name.}
+\item{\code{SCRIPT_NAME}}{The initial portion of the request URL's "path" that corresponds to the application object, so that the application knows its virtual "location".  #' @field SERVER_NAME Server name.}
 
 \item{\code{SERVER_PORT}}{Server port}
 
@@ -82,19 +99,17 @@ A request.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Request$new()}}
-\item \href{#method-print}{\code{Request$print()}}
-\item \href{#method-set}{\code{Request$set()}}
-\item \href{#method-get}{\code{Request$get()}}
-\item \href{#method-get_header}{\code{Request$get_header()}}
-\item \href{#method-parse_multipart}{\code{Request$parse_multipart()}}
-\item \href{#method-parse_json}{\code{Request$parse_json()}}
-\item \href{#method-clone}{\code{Request$clone()}}
+\item \href{#method-Request-new}{\code{Request$new()}}
+\item \href{#method-Request-print}{\code{Request$print()}}
+\item \href{#method-Request-get_header}{\code{Request$get_header()}}
+\item \href{#method-Request-parse_multipart}{\code{Request$parse_multipart()}}
+\item \href{#method-Request-parse_json}{\code{Request$parse_json()}}
+\item \href{#method-Request-clone}{\code{Request$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Request-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Request$new(req)}\if{html}{\out{</div>}}
@@ -113,8 +128,8 @@ Constructor
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-Request-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-print}{}}}
 \subsection{Method \code{print()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Request$print()}\if{html}{\out{</div>}}
@@ -126,53 +141,8 @@ Print
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-set"></a>}}
-\if{latex}{\out{\hypertarget{method-set}{}}}
-\subsection{Method \code{set()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Request$set(name, value)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Name of the variable.}
-
-\item{\code{value}}{Value of the variable.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Set Data
-}
-
-\subsection{Returns}{
-Invisible returns self.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get"></a>}}
-\if{latex}{\out{\hypertarget{method-get}{}}}
-\subsection{Method \code{get()}}{
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Request$get(name)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Name of the variable to get.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Details}{
-Get data
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-get_header"></a>}}
-\if{latex}{\out{\hypertarget{method-get_header}{}}}
+\if{html}{\out{<a id="method-Request-get_header"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-get_header}{}}}
 \subsection{Method \code{get_header()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Request$get_header(name)}\if{html}{\out{</div>}}
@@ -191,8 +161,8 @@ Get Header
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-parse_multipart"></a>}}
-\if{latex}{\out{\hypertarget{method-parse_multipart}{}}}
+\if{html}{\out{<a id="method-Request-parse_multipart"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-parse_multipart}{}}}
 \subsection{Method \code{parse_multipart()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Request$parse_multipart()}\if{html}{\out{</div>}}
@@ -204,8 +174,8 @@ Parse Multipart encoded data
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-parse_json"></a>}}
-\if{latex}{\out{\hypertarget{method-parse_json}{}}}
+\if{html}{\out{<a id="method-Request-parse_json"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-parse_json}{}}}
 \subsection{Method \code{parse_json()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Request$parse_json(...)}\if{html}{\out{</div>}}
@@ -214,7 +184,7 @@ Parse Multipart encoded data
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Arguments passed to \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}}.}
+\item{\code{...}}{Arguments passed to \code{\link[=parse_json]{parse_json()}}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -224,8 +194,8 @@ Parse JSON encoded data
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Request-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Request-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

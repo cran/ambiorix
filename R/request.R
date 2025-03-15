@@ -16,6 +16,7 @@
 #' @field HTTP_SEC_FETCH_USER Only sent for requests initiated by user activation, and its value will always be `?1`.
 #' @field HTTP_UPGRADE_INSECURE_REQUESTS Signals that server supports upgrade.
 #' @field HTTP_USER_AGENT User agent.
+#' @field SERVER_NAME Name of the server.
 #' @field httpuv.version Version of httpuv.
 #' @field PATH_INFO Path of the request.
 #' @field QUERY_STRING Query string of the request.
@@ -26,8 +27,7 @@
 #' @field rook.input Rook inputs.
 #' @field rook.url_scheme Rook url scheme.
 #' @field rook.version Rook version.
-#' @field SCRIPT_NAME The initial portion of the request URL's "path" that corresponds to the application object, so that the application knows its virtual "location".
-#' @field SERVER_NAME Server name.
+#' @field SCRIPT_NAME The initial portion of the request URL's "path" that corresponds to the application object, so that the application knows its virtual "location".  #' @field SERVER_NAME Server name.
 #' @field SERVER_PORT Server port
 #' @field CONTENT_LENGTH Size of the message body.
 #' @field CONTENT_TYPE Type of content of the request.
@@ -37,6 +37,20 @@
 #' @field params A `list` of parameters.
 #' @field cookie Parsed `HTTP_COOKIE`.
 #' 
+#' @return A Request object. 
+#' @examples
+#' if (interactive()) {
+#'   library(ambiorix)
+#' 
+#'   app <- Ambiorix$new()
+#' 
+#'   app$get("/", function(req, res) {
+#'     print(req)
+#'     res$send("Using {ambiorix}!")
+#'   })
+#' 
+#'   app$start()
+#' }
 #' @export 
 Request <- R6::R6Class(
   "Request",
@@ -160,37 +174,6 @@ Request <- R6::R6Class(
 
       cli::cli_end()
     },
-    #' @details Set Data
-    #' @param name Name of the variable.
-    #' @param value Value of the variable.
-    #' @return Invisible returns self.
-    set = function(name, value){
-      assert_that(not_missing(name))
-      assert_that(not_missing(value))
-      .Deprecated(
-        "",
-        package = "ambiorix",
-        "Deprecated. The environment is no longer locked, you may simply `res$name <- value`"
-      )
-
-      name <- as_label(name)
-      self[[name]] <- value
-
-      invisible(self)
-    },
-    #' @details Get data
-    #' @param name Name of the variable to get.
-    get = function(name){
-      assert_that(not_missing(name))
-      .Deprecated(
-        "",
-        package = "ambiorix",
-        "Deprecated. The environment is no longer locked, you may simply `res$value"
-      )
-
-      name <- as_label(name)
-      self[[name]]
-    },
     #' @details Get Header
     #' @param name Name of the header
     get_header = function(name){
@@ -202,34 +185,17 @@ Request <- R6::R6Class(
       parse_multipart(self)
     },
     #' @details Parse JSON encoded data
-    #' @param ... Arguments passed to [jsonlite::fromJSON()].
+    #' @param ... Arguments passed to [parse_json()].
     parse_json = function(...) {
       parse_json(self, ...)
     }
   ),
   private = list(
     .parse_query_string = function(query){
-      if(is.null(query))
+      if(identical(length(query), 0L))
         return()
 
-      if(query == "")
-        return()
-      
-      q <- gsub("^\\?", "", query)
-      params <- strsplit(q, "&")[[1]]
-      params_split <- strsplit(params, "=")
-
-      lst <- sapply(params_split, function(x){
-        if(length(x) > 1) return(utils::URLdecode(x[2]))
-
-        utils::URLdecode(x[1])
-      })
-      names(lst) <- sapply(params_split, function(x){
-        if(length(x) > 1) return(utils::URLdecode(x[1]))
-        return(NULL)
-      })
-
-      self$query <- as.list(lst)
+      self$query <- webutils::parse_query(query)
       invisible()
     }
   )
@@ -239,10 +205,12 @@ Request <- R6::R6Class(
 #' 
 #' Set the query's parameters.
 #' 
-#' @param path Correspond's the the requests' `PATH_INFO`
+#' @param path Corresponds the requests' `PATH_INFO`
 #' @param route See `Route`
 #' 
 #' @return Parameter list
+#' @keywords internal
+#' @noRd
 set_params <- function(path, route = NULL){
 
   if(is.null(route))
@@ -256,7 +224,10 @@ set_params <- function(path, route = NULL){
 
   nms <- c()
   pms <- list()
-  for(i in 1:length(path_split)){
+  for(i in seq_along(path_split)){
+    if(i > length(route$components))
+      break
+
     if(route$components[[i]]$dynamic){
       nms <- c(nms, route$components[[i]]$name)
       pms <- append(pms, utils::URLdecode(path_split[i]))
@@ -278,6 +249,7 @@ set_params <- function(path, route = NULL){
 #' @examples 
 #' mockRequest()
 #' 
+#' @return A `Request` object.
 #' @export 
 mockRequest <- function(
   cookie = "",

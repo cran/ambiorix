@@ -3,21 +3,72 @@
 \name{Websocket}
 \alias{Websocket}
 \title{Websocket}
+\value{
+A Websocket object.
+}
 \description{
 Handle websocket messages.
+}
+\examples{
+# create an Ambiorix app with websocket support:
+if (interactive()) {
+  library(ambiorix)
+
+  home_get <- function(req, res) {
+    res$send("hello, world!")
+  }
+
+  greeting_ws_handler <- function(msg, ws) {
+    cat("Received message:", "\n")
+    print(msg)
+    ws$send("greeting", "Hello from the server!")
+  }
+
+  app <- Ambiorix$new(port = 8080)
+  app$get("/", home_get)
+  app$receive("greeting", greeting_ws_handler)
+  app$start()
+}
+
+# create websocket client from another R session:
+if (interactive()) {
+  client <- websocket::WebSocket$new("ws://127.0.0.1:8080", autoConnect = FALSE)
+
+  client$onOpen(function(event) {
+    cat("Connection opened\n")
+
+    msg <- list(
+      isAmbiorix = TRUE, # __MUST__ be set!
+      name = "greeting",
+      message = "Hello from the client!"
+    )
+
+    # serialise:
+    msg <- yyjsonr::write_json_str(msg, auto_unbox = TRUE)
+
+    client$send(msg)
+  })
+
+  client$onMessage(function(event) {
+    cat("Received message from server:", event$data, "\n")
+  })
+
+  client$connect()
+}
+
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Websocket$new()}}
-\item \href{#method-send}{\code{Websocket$send()}}
-\item \href{#method-print}{\code{Websocket$print()}}
-\item \href{#method-clone}{\code{Websocket$clone()}}
+\item \href{#method-Websocket-new}{\code{Websocket$new()}}
+\item \href{#method-Websocket-send}{\code{Websocket$send()}}
+\item \href{#method-Websocket-print}{\code{Websocket$print()}}
+\item \href{#method-Websocket-clone}{\code{Websocket$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Websocket-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Websocket-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Websocket$new(ws)}\if{html}{\out{</div>}}
@@ -36,8 +87,8 @@ Constructor
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-send"></a>}}
-\if{latex}{\out{\hypertarget{method-send}{}}}
+\if{html}{\out{<a id="method-Websocket-send"></a>}}
+\if{latex}{\out{\hypertarget{method-Websocket-send}{}}}
 \subsection{Method \code{send()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Websocket$send(name, message)}\if{html}{\out{</div>}}
@@ -59,8 +110,8 @@ Send a message
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-Websocket-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Websocket-print}{}}}
 \subsection{Method \code{print()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Websocket$print()}\if{html}{\out{</div>}}
@@ -72,8 +123,8 @@ Print
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Websocket-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Websocket-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

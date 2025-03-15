@@ -9,12 +9,10 @@ Route <- R6::R6Class(
       assert_that(not_missing(path))
       self$path <- gsub("\\?.*$", "", path) # remove query
       self$dynamic <- grepl(":", path)
-      self$decompose()
-      self$as_pattern()
     },
-    as_pattern = function(){
+    as_pattern = function(parent = ""){
       if(!is.null(.globals$pathToPattern)) {
-        self$pattern <-.globals$pathToPattern(self$path)
+        self$pattern <- .globals$pathToPattern(self$path)
         return(
           invisible(self)
         )
@@ -28,12 +26,13 @@ Route <- R6::R6Class(
       })
 
       pattern <- paste0(pattern, collapse = "/")
-      self$pattern <- paste0("^/", pattern, "$")
+      self$pattern <- paste0("^", parent, "/", pattern, "$")
       invisible(self)
     },
-    decompose = function(){
+    decompose = function(parent = ""){
+      path <- paste0(parent, self$path)
       # split
-      components <- strsplit(self$path, "(?<=.)(?=[:/])", perl = TRUE)[[1]]
+      components <- strsplit(path, "(?<=.)(?=[:/])", perl = TRUE)[[1]]
 
       # remove lonely /
       components <- components[components != "/"]
@@ -54,7 +53,7 @@ Route <- R6::R6Class(
 
       components <- as.list(components)
       comp <- list()
-      for(i in 1:length(components)){
+      for(i in seq_along(components)){
         c <- list(
           index = i, 
           dynamic = grepl(":", components[[i]]),
@@ -68,19 +67,31 @@ Route <- R6::R6Class(
     },
     print = function(){
       cli::cli_rule("Ambiorix", right = "route")
-      cat("Only used internally\n")
+      message("Only used internally")
     }
   )
 )
 
 #' Path to pattern
 #' 
-#' identify a function as a path to pattern function;
+#' Identify a function as a path to pattern function;
 #' a function that accepts a path and returns a matching pattern.
 #' 
 #' @param path A function that accepts a character vector of length 1
 #' and returns another character vector of length 1.
 #' 
+#' @examples
+#' fn <- function(path) {
+#'   pattern <- gsub(":([^/]+)", "(\\\\w+)", path)
+#'   paste0("^", pattern, "$")
+#' }
+#' 
+#' path_to_pattern <- as_path_to_pattern(fn)
+#' 
+#' path <- "/dashboard/profile/:user_id"
+#' pattern <- path_to_pattern(path) # "^/dashboard/profile/(\\w+)$"
+#'
+#' @return Object of class "pathToPattern".
 #' @export 
 as_path_to_pattern <- function(path) {
   assert_that(is_function(path))
@@ -101,6 +112,7 @@ print.pathToPattern <- function(x, ...) {
 }
 
 #' @keywords internal
+#' @noRd
 is_path_to_pattern <- function(obj) {
   inherits(obj, "pathToPattern")
 }

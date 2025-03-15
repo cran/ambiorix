@@ -12,7 +12,13 @@ browse_ambiorix <- function(open, url){
 
   viewer <- getOption("viewer", browseURL)
 
-  viewer(url)
+  x <- tryCatch(
+    viewer(url),
+    error = function(e) e
+  )
+
+  if(inherits(x, "error"))
+    message("Unable to open browser, please open manually.")
 
   invisible()
 }
@@ -53,18 +59,27 @@ check_installed <- function(pkg){
     stop(sprintf("This function requires the package {%s}", pkg), call. = FALSE)
 }
 
-#' Retrieve Port
+#' Retrieve the Port for Server Binding
 #'
-#' Retrieve the port to use.
+#' Determines the appropriate port for the server, following a
+#' specific order of precedence.
 #'
-#' @param port Input port, optional.
+#' @param host String. The host address to bind to when selecting a random port.
+#' @param port Integer. An optional input port, provided by the user.
+#' @details The port to use is resolved in the following order of precedence:
+#' 1. Forced Port Option: Typically used by Belgic, the load balancer. If
+#'   the `ambiorix.port.force` R option is specified, this port is returned.
+#'   This option should not be altered during development.
+#' 2. `AMBIORIX_PORT` environment variable
+#' 3. `port` argument.
+#' 4. `SHINY_PORT` environment variable.
+#' 5. Random port.
 #'
-#' @return A port number.
+#' @return Integer. Port value to bind the server.
 #'
 #' @noRd
 #' @keywords internal
 get_port <- function(host, port = NULL){
-
   # we need to override the port if the load balancer
   # is running. This should NOT be set by a dev
   # this ensures we can overwrite
@@ -72,38 +87,49 @@ get_port <- function(host, port = NULL){
   if(!is.null(forced))
     return(forced)
 
-  if(!is.null(port))
+  has_ints_only <- function(x) !grepl(pattern = "\\D", x = x)
+  is_valid_port <- function(x) !is.null(x) && !identical(x, "") && has_ints_only(x)
+
+  ambiorix_port <- Sys.getenv("AMBIORIX_PORT")
+  if (is_valid_port(ambiorix_port))
+    return(as.integer(ambiorix_port))
+
+  if (is_valid_port(port))
     return(as.integer(port))
 
+  shiny_port <- Sys.getenv("SHINY_PORT")
+  if (is_valid_port(shiny_port))
+    return(as.integer(shiny_port))
+
   httpuv::randomPort(host = host)
-}
-
-#' Make label
-#' 
-#' Cheap replacement for rlang::as_label to avoid dependency.
-#' Must fix.
-#' 
-#' @noRd
-#' @keywords internal
-as_label <- function(x) {
-  name <- tryCatch(
-    is.character(x),
-    error = function(e) e
-  )
-
-  if(!inherits(name, "error"))
-    return(x)
-
-  deparse(substitute(x, parent.frame()))
 }
 
 #' Silent readLines
 #' 
 #' Avoids EOF warnings.
 #' 
+#' @param ... Passed to [readLines()]:
+#' 
 #' @keywords internal
+#' @noRd
 read_lines <- function(...) {
-  suppressWarnings(
-    readLines(...)
-  )
+  readLines(..., warn = FALSE)
+}
+
+#' Read file from disk or cache
+#' 
+#' @param path Path to file.
+#' 
+#' @keywords internal
+#' @noRd
+read_lines_cached <- function(path) {
+  if(!.globals$cache_tmpls)
+    return(read_lines(path))
+
+  if(length(.cache_tmpls[[path]]) > 0L)
+    return(.cache_tmpls[[path]])
+
+  content <- read_lines(path)
+  .cache_tmpls[[path]] <- content
+  return(content)
 }
