@@ -211,6 +211,7 @@ Ambiorix <- R6::R6Class(
 
       private$.receivers <- super$get_receivers()
       private$.middleware <- super$get_middleware()
+      private$.params <- super$get_params()
 
       private$.server <- httpuv::startServer(
         host = host,
@@ -254,15 +255,21 @@ Ambiorix <- R6::R6Class(
         )
       )
 
-      url <- sprintf("http://%s:%s", host, port)
+      browser_host <- switch(
+        EXPR = host,
+        "0.0.0.0" = "127.0.0.1",
+        host
+      )
 
-      .globals$successLog$log("Listening on", url)
+      browser_url <- sprintf("http://%s:%s", browser_host, port)
+
+      .globals$successLog$log("Listening on", browser_url)
 
       # runs
       private$.is_running <- TRUE
 
       # open
-      browse_ambiorix(open, url)
+      browse_ambiorix(open, browser_url)
 
       on.exit({
         self$stop()
@@ -352,7 +359,7 @@ Ambiorix <- R6::R6Class(
     .is_running = FALSE,
     .limit = 5 * 1024 * 1024,
     n_routes = function() {
-      length(private$.routes)
+      length(private$.routes) + length(private$.static)
     },
     .make_path = function(path) {
       paste0(private$.basepath, path)
